@@ -385,6 +385,14 @@
       font-size: 0.85rem;
     }
 
+    .prestige-table-header .prestige-col-badge {
+      text-align: center;
+    }
+
+    .prestige-table-header .prestige-col-title {
+      color: #e94560;
+    }
+
     .prestige-table-row {
       display: flex;
       padding: 10px 20px;
@@ -401,21 +409,23 @@
     }
 
     .prestige-col-neeks {
-      width: 70px;
+      width: 80px;
       color: #888;
       font-size: 0.85rem;
     }
 
     .prestige-col-badge {
-      width: 50px;
+      width: 70px;
       font-size: 1.1rem;
       text-align: center;
+      padding-right: 10px;
     }
 
     .prestige-col-title {
       flex: 1;
       color: #fff;
       font-size: 0.9rem;
+      padding-left: 10px;
     }
 
     .prestige-col-title.final-rank {
@@ -822,7 +832,7 @@
     <h2 class="leaderboard-title">🏆 Leaderboard</h2>
     <div class="leaderboard-toggle">
       <button class="toggle-btn active" id="toggleNeeks" onclick="switchLeaderboard('neeks')">Top Neekers</button>
-      <button class="toggle-btn" id="toggleTime" onclick="switchLeaderboard('time')">Longest Neekers</button>
+      <button class="toggle-btn" id="toggleTime" onclick="switchLeaderboard('time')">Most Time</button>
     </div>
     <div class="leaderboard-list" id="leaderboardList">
       <p class="no-users">No neekers yet...</p>
@@ -1004,7 +1014,7 @@
         { min: 3000, badge: '✨', title: 'Legend' },
         { min: 5000, badge: '✨💫', title: 'Mythic' },
         { min: 7500, badge: '👑', title: 'Neek Royalty' },
-        { min: 10000, badge: '👑✨', title: 'Neek God' },
+        { min: 10000, badge: '👑✨', title: 'Neek Champ' },
         { min: 100000, badge: '🕺', title: 'THE FADYH' },
       ];
 

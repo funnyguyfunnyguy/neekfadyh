@@ -246,7 +246,7 @@
     .leaderboard {
       margin-top: 40px;
       width: 100%;
-      max-width: 400px;
+      max-width: 500px; /* Increased width slightly to fit the new column */
     }
 
     .leaderboard-title {
@@ -268,6 +268,7 @@
       align-items: center;
       padding: 12px 20px;
       border-bottom: 1px solid rgba(255,255,255,0.05);
+      gap: 15px; /* Adds space between columns */
     }
 
     .leaderboard-item:last-child {
@@ -278,32 +279,39 @@
       width: 30px;
       font-weight: bold;
       color: #888;
+      flex-shrink: 0;
     }
 
-    .leaderboard-rank.gold {
-      color: #ffd700;
-    }
-
-    .leaderboard-rank.silver {
-      color: #c0c0c0;
-    }
-
-    .leaderboard-rank.bronze {
-      color: #cd7f32;
-    }
+    .leaderboard-rank.gold { color: #ffd700; }
+    .leaderboard-rank.silver { color: #c0c0c0; }
+    .leaderboard-rank.bronze { color: #cd7f32; }
 
     .leaderboard-name {
-      flex: 1;
+      flex: 1; /* Takes up remaining space */
       color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .leaderboard-name.you {
       color: #4ade80;
     }
+    
+    /* New Time Column Style */
+    .leaderboard-time {
+      color: #a0a0a0;
+      font-size: 0.9rem;
+      font-family: monospace;
+      text-align: right;
+      min-width: 70px;
+    }
 
     .leaderboard-score {
       color: #e94560;
       font-weight: bold;
+      min-width: 50px;
+      text-align: right;
     }
 
     .no-users {
@@ -1139,11 +1147,19 @@
           const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
           const isYou = currentUser && user.key === currentUser.uid;
           const prestigeInfo = getPrestigeInfo(user.neeks || 0);
+          
+          // Get time online (default to 0 if missing)
+          const timeOnline = user.timeOnline || 0;
+          const formattedTime = formatTime(timeOnline);
+
           return `
             <div class="leaderboard-item">
               <span class="leaderboard-rank ${rankClass}">#${index + 1}</span>
-              <span class="leaderboard-name ${isYou ? 'you' : ''}">${user.name || 'Anonymous'}${prestigeInfo.badge ? ' ' + prestigeInfo.badge : ''}${isYou ? ' (you)' : ''}</span>
-              <span class="leaderboard-score">${user.neeks || 0}</span>
+              <span class="leaderboard-name ${isYou ? 'you' : ''}">
+                ${user.name || 'Anonymous'}${prestigeInfo.badge ? ' ' + prestigeInfo.badge : ''}${isYou ? ' (you)' : ''}
+              </span>
+              <span class="leaderboard-time" title="Time Online">${formattedTime}</span>
+              <span class="leaderboard-score" title="Neeks">${user.neeks || 0}</span>
             </div>
           `;
         }).join('');

@@ -6,7 +6,7 @@
   <title>neekingFadyH</title>
   <style>
     * {
-      margin: 0; 
+      margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
@@ -246,7 +246,7 @@
     .leaderboard {
       margin-top: 40px;
       width: 100%;
-      max-width: 500px; /* Increased width slightly to fit the new column */
+      max-width: 400px;
     }
 
     .leaderboard-title {
@@ -254,6 +254,41 @@
       font-size: 1.5rem;
       text-align: center;
       margin-bottom: 15px;
+    }
+
+    .leaderboard-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 15px;
+    }
+
+    .toggle-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      color: #888;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn:first-child {
+      border-radius: 8px 0 0 8px;
+    }
+
+    .toggle-btn:last-child {
+      border-radius: 0 8px 8px 0;
+    }
+
+    .toggle-btn.active {
+      background: linear-gradient(145deg, #e94560, #ff6b6b);
+      color: white;
+      border-color: #e94560;
+    }
+
+    .toggle-btn:hover:not(.active) {
+      background: rgba(233, 69, 96, 0.2);
     }
 
     .leaderboard-list {
@@ -268,7 +303,6 @@
       align-items: center;
       padding: 12px 20px;
       border-bottom: 1px solid rgba(255,255,255,0.05);
-      gap: 15px; /* Adds space between columns */
     }
 
     .leaderboard-item:last-child {
@@ -279,39 +313,38 @@
       width: 30px;
       font-weight: bold;
       color: #888;
-      flex-shrink: 0;
     }
 
-    .leaderboard-rank.gold { color: #ffd700; }
-    .leaderboard-rank.silver { color: #c0c0c0; }
-    .leaderboard-rank.bronze { color: #cd7f32; }
+    .leaderboard-rank.gold {
+      color: #ffd700;
+    }
+
+    .leaderboard-rank.silver {
+      color: #c0c0c0;
+    }
+
+    .leaderboard-rank.bronze {
+      color: #cd7f32;
+    }
 
     .leaderboard-name {
-      flex: 1; /* Takes up remaining space */
+      flex: 1;
       color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .leaderboard-name.you {
       color: #4ade80;
     }
-    
-    /* New Time Column Style */
-    .leaderboard-time {
-      color: #a0a0a0;
-      font-size: 0.9rem;
-      font-family: monospace;
-      text-align: right;
-      min-width: 70px;
-    }
 
     .leaderboard-score {
       color: #e94560;
       font-weight: bold;
-      min-width: 50px;
-      text-align: right;
+    }
+
+    .leaderboard-time {
+      color: #4ade80;
+      font-weight: bold;
+      font-size: 0.9rem;
     }
 
     .no-users {
@@ -319,6 +352,75 @@
       text-align: center;
       padding: 20px;
       font-style: italic;
+    }
+
+    /* Prestige Table */
+    .prestige-section {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .prestige-table-title {
+      color: #e94560;
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .prestige-table {
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      border: 1px solid rgba(233, 69, 96, 0.2);
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .prestige-table-header {
+      display: flex;
+      background: rgba(233, 69, 96, 0.2);
+      padding: 12px 20px;
+      font-weight: bold;
+      color: #e94560;
+      font-size: 0.85rem;
+    }
+
+    .prestige-table-row {
+      display: flex;
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+    }
+
+    .prestige-table-row:last-child {
+      border-bottom: none;
+    }
+
+    .prestige-table-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .prestige-col-neeks {
+      width: 70px;
+      color: #888;
+      font-size: 0.85rem;
+    }
+
+    .prestige-col-badge {
+      width: 50px;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    .prestige-col-title {
+      flex: 1;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .prestige-col-title.final-rank {
+      color: #ffd700;
+      font-weight: bold;
     }
 
     .footer {
@@ -717,9 +819,26 @@
 
   <!-- Leaderboard -->
   <div class="leaderboard">
-    <h2 class="leaderboard-title">🏆 Top Neekers</h2>
+    <h2 class="leaderboard-title">🏆 Leaderboard</h2>
+    <div class="leaderboard-toggle">
+      <button class="toggle-btn active" id="toggleNeeks" onclick="switchLeaderboard('neeks')">Top Neekers</button>
+      <button class="toggle-btn" id="toggleTime" onclick="switchLeaderboard('time')">Longest Neekers</button>
+    </div>
     <div class="leaderboard-list" id="leaderboardList">
       <p class="no-users">No neekers yet...</p>
+    </div>
+  </div>
+
+  <!-- Prestige Levels Table -->
+  <div class="prestige-section">
+    <h2 class="prestige-table-title">🎖️ Prestige Levels</h2>
+    <div class="prestige-table" id="prestigeTable">
+      <div class="prestige-table-header">
+        <span class="prestige-col-neeks">Neeks</span>
+        <span class="prestige-col-badge">Badge</span>
+        <span class="prestige-col-title">Title</span>
+      </div>
+      <!-- Rows will be generated by JS -->
     </div>
   </div>
 
@@ -776,6 +895,8 @@
 
       let timeOnlineInterval = null;
       let saveTimeInterval = null;
+      let currentLeaderboardType = 'neeks';
+      let cachedUsersData = null;
       // ===========================================
 
       // Initialize Firebase
@@ -1086,9 +1207,60 @@
       });
 
       // Load leaderboard
-      usersRef.orderByChild('neeks').on('value', (snapshot) => {
+      usersRef.on('value', (snapshot) => {
+        cachedUsersData = snapshot;
         updateLeaderboard(snapshot);
       });
+
+      // Generate prestige table on load
+      renderPrestigeTable();
+
+      function renderPrestigeTable() {
+        const table = document.getElementById('prestigeTable');
+        const rows = PRESTIGE_LEVELS.map((level, index) => {
+          const isFinal = index === PRESTIGE_LEVELS.length - 1;
+          return `
+            <div class="prestige-table-row">
+              <span class="prestige-col-neeks">${level.min.toLocaleString()}</span>
+              <span class="prestige-col-badge">${level.badge || '—'}</span>
+              <span class="prestige-col-title ${isFinal ? 'final-rank' : ''}">${level.title}</span>
+            </div>
+          `;
+        }).join('');
+        
+        table.innerHTML = `
+          <div class="prestige-table-header">
+            <span class="prestige-col-neeks">Neeks</span>
+            <span class="prestige-col-badge">Badge</span>
+            <span class="prestige-col-title">Title</span>
+          </div>
+          ${rows}
+        `;
+      }
+
+      window.switchLeaderboard = function(type) {
+        currentLeaderboardType = type;
+        
+        // Update toggle button styles
+        document.getElementById('toggleNeeks').classList.toggle('active', type === 'neeks');
+        document.getElementById('toggleTime').classList.toggle('active', type === 'time');
+        
+        // Re-render leaderboard
+        if (cachedUsersData) {
+          updateLeaderboard(cachedUsersData);
+        }
+      }
+
+      function formatTimeShort(totalSeconds) {
+        if (!totalSeconds) return '0m';
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        
+        if (hours > 0) {
+          return `${hours}h ${minutes}m`;
+        }
+        return `${minutes}m`;
+      }
 
       function showLoggedInState() {
         document.getElementById('authSection').classList.add('hidden');
@@ -1132,14 +1304,24 @@
           return;
         }
 
-        const sortedUsers = Object.entries(users)
-          .map(([key, val]) => ({ key, ...val }))
-          .filter(u => u.neeks > 0)
-          .sort((a, b) => (b.neeks || 0) - (a.neeks || 0))
-          .slice(0, 10);
+        let sortedUsers;
+        
+        if (currentLeaderboardType === 'neeks') {
+          sortedUsers = Object.entries(users)
+            .map(([key, val]) => ({ key, ...val }))
+            .filter(u => u.neeks > 0)
+            .sort((a, b) => (b.neeks || 0) - (a.neeks || 0))
+            .slice(0, 10);
+        } else {
+          sortedUsers = Object.entries(users)
+            .map(([key, val]) => ({ key, ...val }))
+            .filter(u => u.timeOnline > 0)
+            .sort((a, b) => (b.timeOnline || 0) - (a.timeOnline || 0))
+            .slice(0, 10);
+        }
 
         if (sortedUsers.length === 0) {
-          list.innerHTML = '<p class="no-users">No neekers yet...</p>';
+          list.innerHTML = '<p class="no-users">No data yet...</p>';
           return;
         }
 
@@ -1148,20 +1330,23 @@
           const isYou = currentUser && user.key === currentUser.uid;
           const prestigeInfo = getPrestigeInfo(user.neeks || 0);
           
-          // Get time online (default to 0 if missing)
-          const timeOnline = user.timeOnline || 0;
-          const formattedTime = formatTime(timeOnline);
-
-          return `
-            <div class="leaderboard-item">
-              <span class="leaderboard-rank ${rankClass}">#${index + 1}</span>
-              <span class="leaderboard-name ${isYou ? 'you' : ''}">
-                ${user.name || 'Anonymous'}${prestigeInfo.badge ? ' ' + prestigeInfo.badge : ''}${isYou ? ' (you)' : ''}
-              </span>
-              <span class="leaderboard-time" title="Time Online">${formattedTime}</span>
-              <span class="leaderboard-score" title="Neeks">${user.neeks || 0}</span>
-            </div>
-          `;
+          if (currentLeaderboardType === 'neeks') {
+            return `
+              <div class="leaderboard-item">
+                <span class="leaderboard-rank ${rankClass}">#${index + 1}</span>
+                <span class="leaderboard-name ${isYou ? 'you' : ''}">${user.name || 'Anonymous'}${prestigeInfo.badge ? ' ' + prestigeInfo.badge : ''}${isYou ? ' (you)' : ''}</span>
+                <span class="leaderboard-score">${user.neeks || 0}</span>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="leaderboard-item">
+                <span class="leaderboard-rank ${rankClass}">#${index + 1}</span>
+                <span class="leaderboard-name ${isYou ? 'you' : ''}">${user.name || 'Anonymous'}${prestigeInfo.badge ? ' ' + prestigeInfo.badge : ''}${isYou ? ' (you)' : ''}</span>
+                <span class="leaderboard-time">${formatTimeShort(user.timeOnline)}</span>
+              </div>
+            `;
+          }
         }).join('');
       }
 

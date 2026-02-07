@@ -633,6 +633,98 @@
       color: #4ade80;
     }
 
+    /* Username migration prompt */
+    .username-prompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .username-prompt.hidden {
+      display: none;
+    }
+
+    .username-prompt-content {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border: 2px solid #e94560;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .username-prompt-title {
+      color: #e94560;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+
+    .username-prompt-text {
+      color: #aaa;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    .username-prompt-input {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      width: 100%;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .username-prompt-input:focus {
+      border-color: #e94560;
+    }
+
+    .username-prompt-error {
+      color: #ff4444;
+      font-size: 0.85rem;
+      min-height: 20px;
+      margin-bottom: 10px;
+    }
+
+    .username-prompt-btn {
+      background: linear-gradient(145deg, #e94560, #ff6b6b);
+      border: none;
+      color: white;
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+
+    .username-prompt-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .username-prompt-skip {
+      background: transparent;
+      border: none;
+      color: #666;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     /* Update bell button */
     .update-bell {
       position: fixed;
@@ -760,6 +852,25 @@
     <span class="update-bell-badge hidden" id="updateBadge">!</span>
   </button>
 
+  <!-- Username migration prompt -->
+  <div class="username-prompt hidden" id="usernamePrompt">
+    <div class="username-prompt-content">
+      <h2 class="username-prompt-title">🎉 Set Your Username!</h2>
+      <p class="username-prompt-text">Choose a username for easier login. You can use this instead of your email next time!</p>
+      <input 
+        type="text" 
+        class="username-prompt-input" 
+        id="usernamePromptInput" 
+        placeholder="Choose a username"
+        maxlength="20"
+        onkeydown="if(event.key === 'Enter') saveUsername()"
+      >
+      <p class="username-prompt-error" id="usernamePromptError"></p>
+      <button class="username-prompt-btn" onclick="saveUsername()">Save Username</button>
+      <button class="username-prompt-skip" onclick="skipUsernamePrompt()">Skip for now</button>
+    </div>
+  </div>
+
   <h1>neekingFadyH</h1>
   <p class="subtitle">A sacred place for neeking</p>
 
@@ -771,15 +882,23 @@
       type="text" 
       class="auth-input" 
       id="displayNameInput" 
-      placeholder="Display Name"
+      placeholder="Display Name (shown on leaderboard)"
       maxlength="20"
     >
     
     <input 
-      type="email" 
+      type="text" 
       class="auth-input" 
+      id="usernameInput" 
+      placeholder="Username (for login)"
+      maxlength="20"
+    >
+    
+    <input 
+      type="text" 
+      class="auth-input hidden" 
       id="emailInput" 
-      placeholder="Email"
+      placeholder="Email or Username"
     >
     
     <input 
@@ -915,6 +1034,7 @@
       const database = firebase.database();
       const counterRef = database.ref('neekCounter');
       const usersRef = database.ref('users');
+      const usernamesRef = database.ref('usernames');
 
       let currentUser = null;
       let isSignUpMode = true;
@@ -1014,7 +1134,7 @@
         { min: 3000, badge: '✨', title: 'Legend' },
         { min: 5000, badge: '✨💫', title: 'Mythic' },
         { min: 7500, badge: '👑', title: 'Neek Royalty' },
-        { min: 10000, badge: '👑✨', title: 'Neek Champ' },
+        { min: 10000, badge: '👑✨', title: 'Neek God' },
         { min: 100000, badge: '🕺', title: 'THE FADYH' },
       ];
 
@@ -1195,13 +1315,22 @@
       loadUpdates();
 
       // Listen for auth state changes
-      auth.onAuthStateChanged((user) => {
+      auth.onAuthStateChanged(async (user) => {
         document.getElementById('loadingOverlay').classList.add('hidden');
         
         if (user) {
           currentUser = user;
           showLoggedInState();
           loadUserData();
+          
+          // Check if user needs to set a username (migration for existing email users)
+          const userSnapshot = await usersRef.child(user.uid).once('value');
+          const userData = userSnapshot.val();
+          
+          if (userData && !userData.username && !localStorage.getItem('skippedUsernamePrompt_' + user.uid)) {
+            // Show username migration prompt
+            document.getElementById('usernamePrompt').classList.remove('hidden');
+          }
         } else {
           currentUser = null;
           showLoggedOutState();
@@ -1366,97 +1495,179 @@
         const btn = document.getElementById('authBtn');
         const switchText = document.getElementById('switchText');
         const switchBtn = document.getElementById('switchBtn');
-        const nameInput = document.getElementById('displayNameInput');
+        const displayNameInput = document.getElementById('displayNameInput');
+        const usernameInput = document.getElementById('usernameInput');
+        const emailInput = document.getElementById('emailInput');
         
         if (isSignUpMode) {
           title.textContent = 'Sign Up';
           btn.textContent = 'Sign Up';
           switchText.textContent = 'Already have an account?';
           switchBtn.textContent = 'Log In';
-          nameInput.classList.remove('hidden');
+          displayNameInput.classList.remove('hidden');
+          usernameInput.classList.remove('hidden');
+          emailInput.classList.add('hidden');
         } else {
           title.textContent = 'Log In';
           btn.textContent = 'Log In';
           switchText.textContent = "Don't have an account?";
           switchBtn.textContent = 'Sign Up';
-          nameInput.classList.add('hidden');
+          displayNameInput.classList.add('hidden');
+          usernameInput.classList.add('hidden');
+          emailInput.classList.remove('hidden');
         }
         
         document.getElementById('authError').textContent = '';
       }
 
       window.handleAuth = async function() {
-        const email = document.getElementById('emailInput').value.trim();
-        const password = document.getElementById('authPasswordInput').value;
-        const displayName = document.getElementById('displayNameInput').value.trim();
         const errorEl = document.getElementById('authError');
         const btn = document.getElementById('authBtn');
         
         errorEl.textContent = '';
         
-        if (!email || !password) {
-          errorEl.textContent = 'Please fill in all fields';
-          return;
-        }
-        
-        if (isSignUpMode && !displayName) {
-          errorEl.textContent = 'Please enter a display name';
-          return;
-        }
-        
-        btn.disabled = true;
-        btn.textContent = isSignUpMode ? 'Signing up...' : 'Logging in...';
-        
-        try {
-          if (isSignUpMode) {
-            // Sign up
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            // Create user data in database
+        if (isSignUpMode) {
+          // SIGN UP with username
+          const displayName = document.getElementById('displayNameInput').value.trim();
+          const username = document.getElementById('usernameInput').value.trim().toLowerCase();
+          const password = document.getElementById('authPasswordInput').value;
+          
+          if (!displayName) {
+            errorEl.textContent = 'Please enter a display name';
+            return;
+          }
+          
+          if (!username) {
+            errorEl.textContent = 'Please enter a username';
+            return;
+          }
+          
+          if (!/^[a-z0-9_]+$/.test(username)) {
+            errorEl.textContent = 'Username can only contain letters, numbers, and underscores';
+            return;
+          }
+          
+          if (username.length < 3) {
+            errorEl.textContent = 'Username must be at least 3 characters';
+            return;
+          }
+          
+          if (!password) {
+            errorEl.textContent = 'Please enter a password';
+            return;
+          }
+          
+          btn.disabled = true;
+          btn.textContent = 'Signing up...';
+          
+          try {
+            // Check if username is taken
+            const usernameSnapshot = await usernamesRef.child(username).once('value');
+            if (usernameSnapshot.exists()) {
+              errorEl.textContent = 'Username is already taken';
+              btn.disabled = false;
+              btn.textContent = 'Sign Up';
+              return;
+            }
+            
+            // Create account with fake email
+            const fakeEmail = username + '@neekfadyh.com';
+            const userCredential = await auth.createUserWithEmailAndPassword(fakeEmail, password);
+            
+            // Save username lookup
+            await usernamesRef.child(username).set({
+              uid: userCredential.user.uid,
+              email: fakeEmail
+            });
+            
+            // Create user data
             await usersRef.child(userCredential.user.uid).set({
               name: displayName,
+              username: username,
               neeks: 0,
-              email: email,
+              timeOnline: 0,
               joinedAt: Date.now()
             });
-          } else {
-            // Log in
+            
+            // Clear inputs
+            document.getElementById('displayNameInput').value = '';
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('authPasswordInput').value = '';
+            
+          } catch (error) {
+            let message = 'An error occurred';
+            switch (error.code) {
+              case 'auth/email-already-in-use':
+                message = 'Username is already taken';
+                break;
+              case 'auth/weak-password':
+                message = 'Password must be at least 6 characters';
+                break;
+              default:
+                message = error.message;
+            }
+            errorEl.textContent = message;
+          }
+          
+          btn.disabled = false;
+          btn.textContent = 'Sign Up';
+          
+        } else {
+          // LOG IN with email or username
+          const loginInput = document.getElementById('emailInput').value.trim();
+          const password = document.getElementById('authPasswordInput').value;
+          
+          if (!loginInput || !password) {
+            errorEl.textContent = 'Please fill in all fields';
+            return;
+          }
+          
+          btn.disabled = true;
+          btn.textContent = 'Logging in...';
+          
+          try {
+            let email = loginInput;
+            
+            // Check if it's a username (no @ symbol)
+            if (!loginInput.includes('@')) {
+              const username = loginInput.toLowerCase();
+              const usernameSnapshot = await usernamesRef.child(username).once('value');
+              
+              if (usernameSnapshot.exists()) {
+                email = usernameSnapshot.val().email;
+              } else {
+                // Try as fake email format
+                email = username + '@neekfadyh.com';
+              }
+            }
+            
             await auth.signInWithEmailAndPassword(email, password);
+            
+            // Clear inputs
+            document.getElementById('emailInput').value = '';
+            document.getElementById('authPasswordInput').value = '';
+            
+          } catch (error) {
+            let message = 'An error occurred';
+            switch (error.code) {
+              case 'auth/user-not-found':
+                message = 'No account found';
+                break;
+              case 'auth/wrong-password':
+                message = 'Incorrect password';
+                break;
+              case 'auth/invalid-credential':
+                message = 'Invalid username/email or password';
+                break;
+              default:
+                message = error.message;
+            }
+            errorEl.textContent = message;
           }
           
-          // Clear inputs
-          document.getElementById('emailInput').value = '';
-          document.getElementById('authPasswordInput').value = '';
-          document.getElementById('displayNameInput').value = '';
-          
-        } catch (error) {
-          let message = 'An error occurred';
-          switch (error.code) {
-            case 'auth/email-already-in-use':
-              message = 'Email already in use';
-              break;
-            case 'auth/invalid-email':
-              message = 'Invalid email address';
-              break;
-            case 'auth/weak-password':
-              message = 'Password must be at least 6 characters';
-              break;
-            case 'auth/user-not-found':
-              message = 'No account found with this email';
-              break;
-            case 'auth/wrong-password':
-              message = 'Incorrect password';
-              break;
-            case 'auth/invalid-credential':
-              message = 'Invalid email or password';
-              break;
-            default:
-              message = error.message;
-          }
-          errorEl.textContent = message;
+          btn.disabled = false;
+          btn.textContent = 'Log In';
         }
-        
-        btn.disabled = false;
-        btn.textContent = isSignUpMode ? 'Sign Up' : 'Log In';
       }
 
       window.handleLogout = async function() {
@@ -1465,6 +1676,60 @@
         } catch (error) {
           console.error('Logout error:', error);
         }
+      }
+
+      window.saveUsername = async function() {
+        const usernameInput = document.getElementById('usernamePromptInput');
+        const errorEl = document.getElementById('usernamePromptError');
+        const username = usernameInput.value.trim().toLowerCase();
+        
+        errorEl.textContent = '';
+        
+        if (!username) {
+          errorEl.textContent = 'Please enter a username';
+          return;
+        }
+        
+        if (!/^[a-z0-9_]+$/.test(username)) {
+          errorEl.textContent = 'Letters, numbers, and underscores only';
+          return;
+        }
+        
+        if (username.length < 3) {
+          errorEl.textContent = 'Must be at least 3 characters';
+          return;
+        }
+        
+        try {
+          // Check if username is taken
+          const usernameSnapshot = await usernamesRef.child(username).once('value');
+          if (usernameSnapshot.exists()) {
+            errorEl.textContent = 'Username is already taken';
+            return;
+          }
+          
+          // Save username lookup
+          await usernamesRef.child(username).set({
+            uid: currentUser.uid,
+            email: currentUser.email
+          });
+          
+          // Update user data
+          await usersRef.child(currentUser.uid).child('username').set(username);
+          
+          // Close prompt
+          document.getElementById('usernamePrompt').classList.add('hidden');
+          usernameInput.value = '';
+          
+        } catch (error) {
+          errorEl.textContent = 'Failed to save username';
+          console.error('Username save error:', error);
+        }
+      }
+
+      window.skipUsernamePrompt = function() {
+        document.getElementById('usernamePrompt').classList.add('hidden');
+        localStorage.setItem('skippedUsernamePrompt_' + currentUser.uid, 'true');
       }
 
       window.handleNeek = async function() {
